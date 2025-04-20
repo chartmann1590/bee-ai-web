@@ -1,0 +1,289 @@
+/* === Variables === */
+:root {
+    --bee-yellow: #FFB400;
+    --bee-yellow-dark: #E69A00;
+    --bg-light: #FFFDF5;
+    --text-primary: #333333;
+    --card-bg: #FFFFFF;
+    --border-light: #EDEDED;
+    --max-width: 1200px;
+  }
+  
+  /* Reset & Base */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+  a { color: var(--bee-yellow-dark); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  
+  /* Navbar */
+  .navbar {
+    background-color: var(--bee-yellow);
+    color: #fff;
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .navbar-brand { font-size: 1.75rem; font-weight: bold; }
+  
+  /* Container */
+  .container {
+    max-width: var(--max-width);
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  
+  /* Grid Utilities */
+  .grid {
+    display: grid;
+    gap: 1rem;
+  }
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  /* Card */
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  
+  /* Buttons & Inputs */
+  .button {
+    background: var(--bee-yellow);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: center;
+    display: inline-block;
+  }
+  .button:hover { background: var(--bee-yellow-dark); }
+  
+  .input,
+  textarea {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  
+  /* Alerts */
+  .alert {
+    background: var(--bee-yellow-dark);
+    color: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Tables */
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  .table th,
+  .table td {
+    border: 1px solid var(--border-light);
+    padding: 0.75rem;
+    text-align: left;
+  }
+  .table th { background: var(--bee-yellow); color: #fff; }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    background: #fafafa;
+    font-size: 0.875rem;
+    color: #777;
+  }
+  
+  /* === Conversation Detail Styles === */
+  
+  /* Meta & badge */
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .badge {
+    background: var(--bee-yellow);
+    color: #333;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  /* Map */
+  .map-container {
+    height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  /* Summaries */
+  .short-summary {
+    font-style: italic;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+  .full-summary {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    white-space: pre-wrap;
+  }
+  
+  /* Suggested links */
+  .links-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+  .links-list li {
+    margin-bottom: 0.75rem;
+  }
+  .links-list a {
+    display: inline-block;
+    background: var(--card-bg);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-light);
+    transition: background 0.2s, transform 0.1s;
+  }
+  .links-list a:hover {
+    background: var(--bee-yellow-light);
+    transform: translateY(-2px);
+  }
+  
+  /* Chat container */
+  #conversation-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  
+  /* Chat bubbles */
+  .chat {
+    display: block;
+    margin-bottom: 1rem;
+    max-width: 80%;
+    word-wrap: break-word;
+    position: relative;
+  }
+  .chat.user {
+    margin-left: auto;
+    background: var(--bee-yellow-light);
+    border-radius: 12px 12px 0 12px;
+    padding: 1rem;
+  }
+  .chat.other {
+    margin-right: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 12px 12px 12px 0;
+    padding: 1rem;
+  }
+  
+  /* Chat header (speaker & time) */
+  .chat-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+  .speaker {
+    font-weight: 600;
+  }
+  .time {
+    font-style: italic;
+  }
+  
+  /* Message text */
+  .message {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* === Responsive Breakpoints === */
+  @media (max-width: 992px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    #conversation-container { max-height: 400px; }
+  }
+  @media (max-width: 576px) {
+    .navbar { flex-direction: column; text-align: center; }
+    .navbar-brand { margin-bottom: 0.5rem; }
+    .chat { max-width: 100%; }
+  }
+  
+  /* === Pagination Buttons === */
+.btn-group {
+    display: inline-flex;
+    margin: 1rem 0;
+  }
+  
+  .btn-group .btn {
+    background: var(--bee-yellow);
+    color: #fff;
+    border: 1px solid var(--bee-yellow-dark);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin: 0; /* we’ll handle spacing in the + selector */
+  }
+  
+  .btn-group .btn + .btn {
+    margin-left: 0.5rem;
+  }
+  
+  .btn-group .btn:hover:not(:disabled) {
+    background: var(--bee-yellow-dark);
+  }
+  
+  .btn-group .btn-primary {
+    background: var(--bee-yellow-dark);
+  }
+  
+  .btn-group .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  

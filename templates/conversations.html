@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Conversations{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="mb-4">Conversations</h2>
+
+  <div class="grid grid-1 lg:grid-2 xl:grid-3 gap-6">
+    {% for c in conversations %}
+    <div class="card">
+      <h3>{{ c.title or ('Conversation ' ~ c.id) }}</h3>
+      <div class="meta mb-2">
+        <span class="badge">ID: {{ c.id }}</span>
+        {% if c.createdAt %}<span class="badge">Started: {{ c.createdAt }}</span>{% endif %}
+      </div>
+      <div class="grid grid-2" style="gap:0.5rem;">
+        <a href="{{ url_for('conversation_detail', conversation_id=c.id, page=page) }}" class="button">View</a>
+        <form action="{{ url_for('end_conversation', conv_id=c.id) }}" method="post"><button type="submit" class="button">End</button></form>
+        <form action="{{ url_for('retry_conversation', conv_id=c.id) }}" method="post"><button type="submit" class="button">Retry</button></form>
+        <form action="{{ url_for('delete_conversation', conv_id=c.id) }}" method="post"><button type="submit" class="button">Delete</button></form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <nav class="mt-6 flex justify-center items-center space-x-2">
+    {% if page > 1 %}
+      <a href="{{ url_for('conversations', page=page-1) }}" class="button">Previous</a>
+    {% else %}
+      <span class="button opacity-50 cursor-default">Previous</span>
+    {% endif %}
+
+    {% for p in range(1, total_pages+1) %}
+      {% if p == page %}
+        <span class="button opacity-70 cursor-default">{{ p }}</span>
+      {% else %}
+        <a href="{{ url_for('conversations', page=p) }}" class="button">{{ p }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+      <a href="{{ url_for('conversations', page=page+1) }}" class="button">Next</a>
+    {% else %}
+      <span class="button opacity-50 cursor-default">Next</span>
+    {% endif %}
+  </nav>
+
+  <div class="mt-4">
+    <a href="{{ url_for('dashboard') }}" class="button">Back</a>
+  </div>
+</div>
+{% endblock %}

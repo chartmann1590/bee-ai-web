@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} To‑Do{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>{{ action }} To‑Do</h2>
+  <form method="post">
+    <label>Text:</label>
+    <input type="text" name="text" class="input" value="{{ todo.get('text','') }}" required>
+    <label><input type="checkbox" name="completed" {% if todo.get('completed') %}checked{% endif %}> Completed</label>
+    <div style="margin-top:1rem;">
+      <button type="submit" class="button">Save</button>
+      <a href="{{ url_for('todos') }}" class="button" style="background:#ccc;color:#333;margin-left:0.5rem;">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

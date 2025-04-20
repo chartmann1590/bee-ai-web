@@ -1,0 +1,76 @@
+{# templates/conversation_detail.html #}
+{% extends "base.html" %}
+{% block title %}Conversation {{ convo.conversation.id }}{% endblock %}
+
+{% block extra_head %}
+  <!-- Leaflet for map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+{% endblock %}
+
+{% block content %}
+  <h1>Conversation #{{ convo.conversation.id }}</h1>
+
+  <a
+    href="{{ url_for('conversation_pdf', conversation_id=convo.conversation.id) }}"
+    class="btn btn-primary"
+    style="float: right; margin-top: -2rem;"
+    >
+    Export to PDF
+   </a>
+
+  <div class="meta">
+    <span class="badge">{{ convo.conversation.state }}</span>
+    <span>Started: {{ convo.conversation.start_time }}</span>
+    <span>Ended: {{ convo.conversation.end_time }}</span>
+  </div>
+
+  {% if convo.conversation.primary_location %}
+    <h2>Location</h2>
+    <div id="map" class="map-container"></div>
+  {% endif %}
+
+  <h2>Short Summary</h2>
+  <p class="short-summary">{{ convo.conversation.short_summary }}</p>
+
+  <h2>Full Summary</h2>
+  <div class="full-summary">{{ convo.conversation.summary | safe }}</div>
+
+  <h2>Suggested Links</h2>
+  <ul class="links-list">
+    {% for link in convo.conversation.suggested_links %}
+      <li><a href="{{ link.url }}" target="_blank">{{ link.url }}</a></li>
+    {% endfor %}
+  </ul>
+
+  <h2>Transcription</h2>
+  <div id="conversation-container">
+    {% for t in convo.conversation.transcriptions %}
+      {% for u in t.utterances %}
+        <div class="chat {{ 'user' if u.speaker=='me' else 'other' }}">
+          <div class="chat-header">
+            <span class="speaker">{{ u.speaker }}</span>
+            <span class="time">{{ u.spoken_at }}</span>
+          </div>
+          <div class="message">{{ u.text }}</div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    {% if convo.conversation.primary_location %}
+      const lat = {{ convo.conversation.primary_location.latitude }};
+      const lng = {{ convo.conversation.primary_location.longitude }};
+      const map = L.map('map').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup(`{{ convo.conversation.primary_location.address }}`);
+    {% endif %}
+  </script>
+{% endblock %}

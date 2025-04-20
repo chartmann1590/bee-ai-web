@@ -1,0 +1,54 @@
+{# conversation_pdf.html #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Conversation {{ convo.conversation.id }}</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    h1, h2 { border-bottom: 1px solid #ccc; padding-bottom: .2em; }
+    .meta span { display: inline-block; margin-right: 1em; }
+    .chat { margin-bottom: 1em; }
+    .chat-header { font-size: .9em; color: #555; }
+    .message { margin-left: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Conversation #{{ convo.conversation.id }}</h1>
+  <div class="meta">
+    <span>Status: {{ convo.conversation.state }}</span>
+    <span>Started: {{ convo.conversation.start_time }}</span>
+    <span>Ended: {{ convo.conversation.end_time }}</span>
+  </div>
+
+  {% if convo.conversation.primary_location %}
+    <h2>Location</h2>
+    <p>{{ convo.conversation.primary_location.address }}</p>
+  {% endif %}
+
+  <h2>Short Summary</h2>
+  <p>{{ convo.conversation.short_summary }}</p>
+
+  <h2>Full Summary</h2>
+  <div>{{ convo.conversation.summary | safe }}</div>
+
+  <h2>Suggested Links</h2>
+  <ul>
+    {% for link in convo.conversation.suggested_links %}
+      <li>{{ link.url }}</li>
+    {% endfor %}
+  </ul>
+
+  <h2>Transcription</h2>
+  {% for t in convo.conversation.transcriptions %}
+    {% for u in t.utterances %}
+      <div class="chat">
+        <div class="chat-header">
+          <strong>{{ u.speaker }}</strong> &bull; {{ u.spoken_at }}
+        </div>
+        <div class="message">{{ u.text }}</div>
+      </div>
+    {% endfor %}
+  {% endfor %}
+</body>
+</html>

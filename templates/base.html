@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+  <title>{% block title %}Bee Dashboard{% endblock %}</title>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="{{ url_for('dashboard') }}" class="logo">🐝 Bee</a>
+  </nav>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    Powered by Bee.ai
+  </footer>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

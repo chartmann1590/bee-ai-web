@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Fact{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>{{ action }} Fact</h2>
+  <form method="post">
+    <label>Text:</label>
+    <textarea name="text" class="input" required>{{ fact.get('text','') }}</textarea>
+    <label><input type="checkbox" name="confirmed" {% if fact.get('confirmed') %}checked{% endif %}> Confirmed</label>
+    <div style="margin-top:1rem;">
+      <button type="submit" class="button">Save</button>
+      <a href="{{ url_for('facts') }}" class="button" style="background:#ccc;color:#333;margin-left:0.5rem;">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

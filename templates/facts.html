@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Facts{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="grid grid-2" style="align-items: center; margin-bottom:1.5rem;">
+    <h2>Facts</h2>
+    <a href="{{ url_for('new_fact') }}" class="button">New Fact</a>
+  </div>
+
+  {% if facts %}
+  <div class="grid grid-3" style="gap:1rem;">
+    {% for f in facts %}
+    <div class="card" style="padding:1rem; display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div class="meta" style="margin-bottom:0.5rem;">
+          <span class="badge">ID: {{ f.id }}</span>
+          <span class="badge" style="margin-left:0.5rem;">{{ 'Confirmed' if f.confirmed else 'Unconfirmed' }}</span>
+        </div>
+        <p class="full-summary">{{ f.text }}</p>
+      </div>
+      <div class="grid grid-2" style="gap:0.5rem; margin-top:1rem;">
+        <a href="{{ url_for('edit_fact', fact_id=f.id) }}" class="button">Edit</a>
+        <form action="{{ url_for('delete_fact', fact_id=f.id) }}" method="post" style="margin:0;">
+          <button type="submit" class="button">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>No facts available. <a href="{{ url_for('new_fact') }}">Add the first fact</a>.</p>
+  {% endif %}
+
+  <div style="margin-top:2rem;">
+    <a href="{{ url_for('dashboard') }}" class="button">Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

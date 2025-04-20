@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+  <div class="alert">
+    Welcome to your Bee Dashboard! Select a tool to get started.
+  </div>
+  <div class="grid grid-2 tool-grid">
+    <a href="{{ url_for('conversations') }}" class="card tool-card">
+      <div class="icon">💬</div>
+      <h3>Conversations</h3>
+      <p>Chat histories &amp; summaries</p>
+    </a>
+    <a href="{{ url_for('facts') }}" class="card tool-card">
+      <div class="icon">📚</div>
+      <h3>Facts</h3>
+      <p>Stored facts &amp; knowledge</p>
+    </a>
+    <a href="{{ url_for('todos') }}" class="card tool-card">
+      <div class="icon">✅</div>
+      <h3>To‑Dos</h3>
+      <p>Manage your tasks</p>
+    </a>
+    <a href="{{ url_for('locations') }}" class="card tool-card">
+      <div class="icon">📍</div>
+      <h3>Locations</h3>
+      <p>Track your places</p>
+    </a>
+  </div>
+  <div style="margin-top:1.5rem; text-align:center;">
+    <a href="{{ url_for('index') }}" class="button">Change API Key</a>
+  </div>
+{% endblock %}

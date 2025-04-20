@@ -1,0 +1,5 @@
+Flask
+beeai
+python-dotenv
+WeasyPrint
+pdfkit

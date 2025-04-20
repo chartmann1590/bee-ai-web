@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}To‑Dos{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="grid grid-2" style="align-items: center; margin-bottom:1.5rem;">
+    <h2>To‑Dos</h2>
+    <a href="{{ url_for('new_todo') }}" class="button">New To‑Do</a>
+  </div>
+
+  {# Separate pending and completed lists #}
+  {% set pending = todos | selectattr('completed', 'equalto', False) | list %}
+  {% set completed = todos | selectattr('completed', 'equalto', True) | list %}
+
+  <section style="margin-bottom:2rem;">
+    <h3>Pending To‑Dos</h3>
+    {% if pending %}
+    <ul class="list-none">
+      {% for t in pending %}
+      <li class="card" style="display:flex; justify-content: space-between; align-items:center; margin-bottom:0.5rem; padding:1rem;">
+        <div>
+          <p class="message">{{ t.text }}</p>
+          {% if t.alarm_at %}
+          <small class="badge" style="background:#e0e0e0; color:#333; margin-top:0.25rem; display:inline-block;">Alarm: {{ t.alarm_at }}</small>
+          {% endif %}
+        </div>
+        <div class="grid grid-2" style="gap:0.5rem;">
+          <a href="{{ url_for('edit_todo', todo_id=t.id) }}" class="button">Edit</a>
+          <form action="{{ url_for('delete_todo', todo_id=t.id) }}" method="post" style="margin:0;">
+            <button type="submit" class="button">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No pending to‑dos.</p>
+    {% endif %}
+  </section>
+
+  <section style="margin-bottom:2rem;">
+    <h3>Completed To‑Dos</h3>
+    {% if completed %}
+    <ul class="list-none">
+      {% for t in completed %}
+      <li class="card" style="display:flex; justify-content: space-between; align-items:center; margin-bottom:0.5rem; padding:1rem; opacity:0.6;">
+        <div>
+          <p class="message"><s>{{ t.text }}</s></p>
+          {% if t.alarm_at %}
+          <small class="badge" style="background:#e0e0e0; color:#333; margin-top:0.25rem; display:inline-block;">Alarm: {{ t.alarm_at }}</small>
+          {% endif %}
+        </div>
+        <div class="grid grid-2" style="gap:0.5rem;">
+          <a href="{{ url_for('edit_todo', todo_id=t.id) }}" class="button">Edit</a>
+          <form action="{{ url_for('delete_todo', todo_id=t.id) }}" method="post" style="margin:0;">
+            <button type="submit" class="button">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No completed to‑dos.</p>
+    {% endif %}
+  </section>
+
+  <div>
+    <a href="{{ url_for('dashboard') }}" class="button">Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}
