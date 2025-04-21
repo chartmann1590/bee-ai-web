@@ -8,6 +8,8 @@ A Flask-based web interface for [Bee AI](https://bee.computer), enabling you to:
 - Manage "Facts" (CRUD operations and filtering)
 - Manage "To-Dos" (CRUD operations)
 - Browse paginated "Locations"
+- Semantic Dashboard Search: perform semantic search across conversations, facts, and to-dos locally without external API calls
+- Markdown Rendering: automatically render Markdown content in templates using a custom filter
 
 ---
 
@@ -30,6 +32,9 @@ A Flask-based web interface for [Bee AI](https://bee.computer), enabling you to:
 - **Python 3.10+**
 - **pip** or **pipenv**
 - **wkhtmltopdf** (for PDF export)
+- **faiss-cpu** (for vector search functionality)
+- **sentence-transformers** (for local embedding model)
+- **PyTorch** (automatically installed as a dependency of sentence-transformers)
 
 ### Install System Dependencies
 
@@ -103,7 +108,10 @@ Access the app at [http://localhost:5000](http://localhost:5000).
 ## Usage
 
 1. **Login:** Paste your Bee API key on the home page and submit.
-2. **Dashboard:** Navigate to various sections.
+2. **Dashboard:** 
+   - Displays an overview and quick navigation links.
+
+   - Search: Use the search box to perform a local semantic search over your conversations, facts, and to-dos. Results are ranked by relevance and presented with a snippet and  link to the source.
 3. **Conversations:**
    - Lists conversations with pagination.
    - End, retry, or delete conversations.
@@ -157,8 +165,10 @@ Access the app at [http://localhost:5000](http://localhost:5000).
 ## Notes
 
 - Sessions store API keys securely in signed cookies; they are not saved to disk.
-- PDF export functionality relies on `wkhtmltopdf` and `pdfkit`.
-- For production use, set `FLASK_ENV=production` and deploy with a WSGI server such as Gunicorn.
+- The dashboard leverages FAISS and SentenceTransformer to build a local semantic index on first search and serve results without external calls.
+- Markdown content in messages and facts is rendered via a custom Jinja filter.
+- PDF export functionality relies on wkhtmltopdf and pdfkit.
+- For production use, set FLASK_ENV=production and deploy with a WSGI server such as Gunicorn.
 
 ---
 
