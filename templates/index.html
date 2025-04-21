@@ -1,12 +1,15 @@
+<!-- templates/index.html -->
 {% extends 'base.html' %}
 {% block title %}Sign In{% endblock %}
+
 {% block content %}
-<div class="card">
-  <h2>Welcome to Bee.ai</h2>
-  <p>Please enter your API key to continue.</p>
-  <form method="post">
-    <input type="text" name="api_key" placeholder="API Key" class="input" required>
-    <button type="submit" class="button">Sign In</button>
-  </form>
-</div>
+  <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-md space-y-6">
+    <h2 class="text-2xl font-semibold text-center">Welcome to Bee.ai</h2>
+    <p class="text-gray-600 text-center">Please enter your API key to continue.</p>
+    <form method="post" class="space-y-4">
+      <input type="text" name="api_key" placeholder="API Key"
+             class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-beeYellow transition" required>
+      <button type="submit" class="w-full bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-2 rounded-lg transition">Sign In</button>
+    </form>
+  </div>
 {% endblock %}

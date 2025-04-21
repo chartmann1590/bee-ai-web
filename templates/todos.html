@@ -1,70 +1,96 @@
+<!-- templates/todos.html -->
 {% extends 'base.html' %}
 {% block title %}To‑Dos{% endblock %}
+
 {% block content %}
-<div class="container">
-  <div class="grid grid-2" style="align-items: center; margin-bottom:1.5rem;">
-    <h2>To‑Dos</h2>
-    <a href="{{ url_for('new_todo') }}" class="button">New To‑Do</a>
+<div class="max-w-4xl mx-auto space-y-8">
+
+  <!-- Header and New To‑Do Button -->
+  <div class="flex items-center justify-between">
+    <h2 class="text-2xl font-semibold text-gray-800">To‑Dos</h2>
+    <a href="{{ url_for('new_todo') }}"
+       class="bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+      New To‑Do
+    </a>
   </div>
 
-  {# Separate pending and completed lists #}
-  {% set pending = todos | selectattr('completed', 'equalto', False) | list %}
-  {% set completed = todos | selectattr('completed', 'equalto', True) | list %}
-
-  <section style="margin-bottom:2rem;">
-    <h3>Pending To‑Dos</h3>
+  <!-- Pending To‑Dos -->
+  <section>
+    <h3 class="text-xl font-medium text-gray-700 mb-4">Pending To‑Dos</h3>
     {% if pending %}
-    <ul class="list-none">
+    <ul class="space-y-4">
       {% for t in pending %}
-      <li class="card" style="display:flex; justify-content: space-between; align-items:center; margin-bottom:0.5rem; padding:1rem;">
-        <div>
-          <p class="message">{{ t.text }}</p>
+      <li class="bg-white rounded-2xl shadow-md p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl">
+        <div class="space-y-1">
+          <p class="text-gray-800">{{ t.text }}</p>
           {% if t.alarm_at %}
-          <small class="badge" style="background:#e0e0e0; color:#333; margin-top:0.25rem; display:inline-block;">Alarm: {{ t.alarm_at }}</small>
+          <span class="inline-block bg-gray-100 text-gray-600 text-sm py-1 px-2 rounded">
+            Alarm: {{ t.alarm_at }}
+          </span>
           {% endif %}
         </div>
-        <div class="grid grid-2" style="gap:0.5rem;">
-          <a href="{{ url_for('edit_todo', todo_id=t.id) }}" class="button">Edit</a>
-          <form action="{{ url_for('delete_todo', todo_id=t.id) }}" method="post" style="margin:0;">
-            <button type="submit" class="button">Delete</button>
+        <div class="mt-4 sm:mt-0 flex space-x-2">
+          <a href="{{ url_for('edit_todo', todo_id=t.id) }}"
+             class="bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-1 px-4 rounded-lg transition">
+            Edit
+          </a>
+          <form action="{{ url_for('delete_todo', todo_id=t.id) }}" method="post" class="inline">
+            <button type="submit"
+                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-4 rounded-lg transition">
+              Delete
+            </button>
           </form>
         </div>
       </li>
       {% endfor %}
     </ul>
     {% else %}
-    <p>No pending to‑dos.</p>
+    <p class="text-gray-500">No pending to‑dos.</p>
     {% endif %}
   </section>
 
-  <section style="margin-bottom:2rem;">
-    <h3>Completed To‑Dos</h3>
+  <!-- Completed To‑Dos -->
+  <section>
+    <h3 class="text-xl font-medium text-gray-700 mb-4">Completed To‑Dos</h3>
     {% if completed %}
-    <ul class="list-none">
+    <ul class="space-y-4">
       {% for t in completed %}
-      <li class="card" style="display:flex; justify-content: space-between; align-items:center; margin-bottom:0.5rem; padding:1rem; opacity:0.6;">
-        <div>
-          <p class="message"><s>{{ t.text }}</s></p>
+      <li class="bg-white rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center opacity-60">
+        <div class="space-y-1">
+          <p class="text-gray-800 line-through">{{ t.text }}</p>
           {% if t.alarm_at %}
-          <small class="badge" style="background:#e0e0e0; color:#333; margin-top:0.25rem; display:inline-block;">Alarm: {{ t.alarm_at }}</small>
+          <span class="inline-block bg-gray-100 text-gray-600 text-sm py-1 px-2 rounded">
+            Alarm: {{ t.alarm_at }}
+          </span>
           {% endif %}
         </div>
-        <div class="grid grid-2" style="gap:0.5rem;">
-          <a href="{{ url_for('edit_todo', todo_id=t.id) }}" class="button">Edit</a>
-          <form action="{{ url_for('delete_todo', todo_id=t.id) }}" method="post" style="margin:0;">
-            <button type="submit" class="button">Delete</button>
+        <div class="mt-4 sm:mt-0 flex space-x-2">
+          <a href="{{ url_for('edit_todo', todo_id=t.id) }}"
+             class="bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-1 px-4 rounded-lg transition">
+            Edit
+          </a>
+          <form action="{{ url_for('delete_todo', todo_id=t.id) }}" method="post" class="inline">
+            <button type="submit"
+                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-4 rounded-lg transition">
+              Delete
+            </button>
           </form>
         </div>
       </li>
       {% endfor %}
     </ul>
     {% else %}
-    <p>No completed to‑dos.</p>
+    <p class="text-gray-500">No completed to‑dos.</p>
     {% endif %}
   </section>
 
-  <div>
-    <a href="{{ url_for('dashboard') }}" class="button">Back to Dashboard</a>
+  <!-- Back to Dashboard -->
+  <div class="text-center">
+    <a href="{{ url_for('dashboard') }}"
+       class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg transition">
+      Back to Dashboard
+    </a>
   </div>
+
 </div>
 {% endblock %}

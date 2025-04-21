@@ -3,3 +3,4 @@ beeai
 python-dotenv
 WeasyPrint
 pdfkit
+markdown

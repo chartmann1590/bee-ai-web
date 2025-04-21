@@ -1,32 +1,43 @@
+<!-- templates/dashboard.html -->
 {% extends 'base.html' %}
 {% block title %}Dashboard{% endblock %}
+
 {% block content %}
-  <div class="alert">
+  <div class="mb-6 p-4 bg-beeYellowDark text-white rounded-xl shadow-md animate-fade-in">
     Welcome to your Bee Dashboard! Select a tool to get started.
   </div>
-  <div class="grid grid-2 tool-grid">
-    <a href="{{ url_for('conversations') }}" class="card tool-card">
-      <div class="icon">💬</div>
-      <h3>Conversations</h3>
-      <p>Chat histories &amp; summaries</p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <a href="{{ url_for('conversations') }}"
+       class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
+      <div class="text-4xl mb-3">💬</div>
+      <h3 class="text-lg font-semibold mb-1">Conversations</h3>
+      <p class="text-gray-500 text-sm">Chat histories &amp; summaries</p>
     </a>
-    <a href="{{ url_for('facts') }}" class="card tool-card">
-      <div class="icon">📚</div>
-      <h3>Facts</h3>
-      <p>Stored facts &amp; knowledge</p>
+    <a href="{{ url_for('facts') }}"
+       class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
+      <div class="text-4xl mb-3">📚</div>
+      <h3 class="text-lg font-semibold mb-1">Facts</h3>
+      <p class="text-gray-500 text-sm">Stored facts &amp; knowledge</p>
     </a>
-    <a href="{{ url_for('todos') }}" class="card tool-card">
-      <div class="icon">✅</div>
-      <h3>To‑Dos</h3>
-      <p>Manage your tasks</p>
+    <a href="{{ url_for('todos') }}"
+       class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
+      <div class="text-4xl mb-3">✅</div>
+      <h3 class="text-lg font-semibold mb-1">To‑Dos</h3>
+      <p class="text-gray-500 text-sm">Manage your tasks</p>
     </a>
-    <a href="{{ url_for('locations') }}" class="card tool-card">
-      <div class="icon">📍</div>
-      <h3>Locations</h3>
-      <p>Track your places</p>
+    <a href="{{ url_for('locations') }}"
+       class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
+      <div class="text-4xl mb-3">📍</div>
+      <h3 class="text-lg font-semibold mb-1">Locations</h3>
+      <p class="text-gray-500 text-sm">Track your places</p>
     </a>
   </div>
-  <div style="margin-top:1.5rem; text-align:center;">
-    <a href="{{ url_for('index') }}" class="button">Change API Key</a>
+
+  <div class="mt-8 text-center">
+    <a href="{{ url_for('index') }}"
+       class="inline-block bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-2 px-5 rounded-lg shadow hover:shadow-md transition">
+      Change API Key
+    </a>
   </div>
 {% endblock %}

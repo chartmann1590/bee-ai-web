@@ -1,21 +1,44 @@
+<!-- templates/base.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  {% block extra_head %}{% endblock %}
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            beeYellow: '#FFB400',
+            beeYellowDark: '#E69A00',
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          }
+        }
+      }
+    }
+  </script>
   <title>{% block title %}Bee Dashboard{% endblock %}</title>
+  {% block extra_head %}{% endblock %}
 </head>
-<body>
-  <nav class="navbar">
-    <a href="{{ url_for('dashboard') }}" class="logo">🐝 Bee</a>
+<body class="font-sans bg-gray-50 text-gray-800 antialiased">
+  <nav class="bg-beeYellow text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="{{ url_for('dashboard') }}" class="text-2xl font-bold hover:opacity-90 transition">🐝 Bee</a>
+    </div>
   </nav>
-  <main class="container">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     {% block content %}{% endblock %}
   </main>
-  <footer class="footer">
-    Powered by Bee.ai
+  <footer class="text-center py-4 bg-white shadow-inner">
+    <p class="text-sm text-gray-500">Powered by Bee.ai</p>
   </footer>
   {% block extra_scripts %}{% endblock %}
 </body>

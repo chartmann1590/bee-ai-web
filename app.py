@@ -11,6 +11,7 @@ from flask import (
 from beeai import Bee
 from dotenv import load_dotenv
 import pdfkit
+import markdown as md
 
 # Load .env (FLASK_SECRET_KEY)
 load_dotenv()
@@ -22,6 +23,15 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret')
 @app.context_processor
 def inject_now():
     return {'current_year': datetime.utcnow().year}
+
+# Markdown filter
+@app.template_filter('markdown')
+def markdown_to_html(text):
+    """Convert Markdown to HTML with fenced code and highlighting."""
+    return md.markdown(
+        text or '',
+        extensions=['fenced_code', 'codehilite']
+    )
 
 # Bee client factory (returns None if not logged in)
 def get_bee():
@@ -233,9 +243,28 @@ def todos():
     if not bee:
         return redirect(url_for('index'))
 
-    payload = asyncio.run(bee.get_todos('me'))
-    todos = payload.get('todos', [])
-    return render_template('todos.html', todos=todos)
+    # Fetch every page of to‑dos
+    all_todos = []
+    api_page  = 1
+    api_limit = 100  # or whatever max the API allows
+
+    while True:
+        payload = asyncio.run(bee.get_todos('me', page=api_page, limit=api_limit))
+        batch   = payload.get('todos', [])
+        if not batch:
+            break
+        all_todos.extend(batch)
+        api_page += 1
+
+    # Split into pending vs completed
+    pending   = [t for t in all_todos if not t.get('completed')]
+    completed = [t for t in all_todos if     t.get('completed')]
+
+    return render_template(
+        'todos.html',
+        pending=pending,
+        completed=completed
+    )
 
 @app.route('/todos/new', methods=['GET', 'POST'])
 def new_todo():

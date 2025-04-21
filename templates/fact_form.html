@@ -1,15 +1,46 @@
+<!-- templates/fact_form.html -->
 {% extends 'base.html' %}
 {% block title %}{{ action }} Fact{% endblock %}
+
 {% block content %}
-<div class="card">
-  <h2>{{ action }} Fact</h2>
-  <form method="post">
-    <label>Text:</label>
-    <textarea name="text" class="input" required>{{ fact.get('text','') }}</textarea>
-    <label><input type="checkbox" name="confirmed" {% if fact.get('confirmed') %}checked{% endif %}> Confirmed</label>
-    <div style="margin-top:1rem;">
-      <button type="submit" class="button">Save</button>
-      <a href="{{ url_for('facts') }}" class="button" style="background:#ccc;color:#333;margin-left:0.5rem;">Cancel</a>
+<div class="max-w-lg mx-auto bg-white rounded-2xl shadow-md p-6 space-y-6">
+  <h2 class="text-2xl font-semibold text-gray-800">{{ action }} Fact</h2>
+  <form method="post" class="space-y-4">
+    <div>
+      <label for="text" class="block text-sm font-medium text-gray-700 mb-1">Text:</label>
+      <textarea
+        id="text"
+        name="text"
+        rows="4"
+        required
+        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-beeYellow focus:border-beeYellowDark transition"
+      >{{ fact.get('text','') }}</textarea>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <input
+        id="confirmed"
+        type="checkbox"
+        name="confirmed"
+        class="h-4 w-4 text-beeYellow focus:ring-beeYellowDark border-gray-300 rounded"
+        {% if fact.get('confirmed') %}checked{% endif %}
+      >
+      <label for="confirmed" class="text-gray-700">Confirmed</label>
+    </div>
+
+    <div class="pt-4 flex space-x-4">
+      <button
+        type="submit"
+        class="bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-2 px-4 rounded-lg transition"
+      >
+        Save
+      </button>
+      <a
+        href="{{ url_for('facts') }}"
+        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition"
+      >
+        Cancel
+      </a>
     </div>
   </form>
 </div>
