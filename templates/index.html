@@ -3,6 +3,7 @@
 {% block title %}Sign In{% endblock %}
 
 {% block content %}
+<div x-data="{ showModal: {{ 'true' if invalid_key else 'false' }} }">
   <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-md space-y-6">
     <h2 class="text-2xl font-semibold text-center">Welcome to Bee.ai</h2>
     <p class="text-gray-600 text-center">Please enter your API key to continue.</p>
@@ -11,5 +12,31 @@
              class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-beeYellow transition" required>
       <button type="submit" class="w-full bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-2 rounded-lg transition">Sign In</button>
     </form>
+    {% if invalid_key %}
+      <p class="text-red-500 text-center text-sm mt-2">Invalid API key. Please try again.</p>
+    {% endif %}
   </div>
+
+  <!-- Text Tutorial -->
+  <div class="max-w-2xl mx-auto mt-8 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 rounded-lg">
+    <h3 class="font-bold text-lg">How to Get a Bee Developer API Key</h3>
+    <ol class="list-decimal list-inside mt-2 space-y-1 text-sm text-gray-700">
+      <li>Visit <a href="https://developer.bee.computer/" class="text-blue-600 underline" target="_blank">developer.bee.computer</a>.</li>
+      <li>Sign in using your Apple ID (this is required).</li>
+      <li>Go to your <strong>Dashboard</strong>.</li>
+      <li>Click <strong>“Generate API Key”</strong> under Developer API.</li>
+      <li>Copy the key and paste it above to sign in.</li>
+    </ol>
+    <p class="mt-2 text-sm text-gray-600">You must have a valid Apple account to access developer features.</p>
+  </div>
+
+  <!-- Image Modal (shown only if API key is invalid) -->
+  <div x-show="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" x-transition>
+    <div class="bg-white p-6 rounded-xl max-w-3xl w-full shadow-lg relative">
+      <button @click="showModal = false" class="absolute top-2 right-2 text-gray-400 hover:text-black text-xl font-bold">&times;</button>
+      <h3 class="text-xl font-semibold mb-4">Need Help? Here's How to Get Your API Key:</h3>
+      <img src="{{ url_for('static', filename='images/how-to.png') }}" alt="How to Get API Key" class="w-full rounded-md border border-gray-200">
+    </div>
+  </div>
+</div>
 {% endblock %}

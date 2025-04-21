@@ -3,10 +3,58 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+  <!-- Search form -->
+  <form method="get" action="{{ url_for('dashboard') }}" class="mb-6 flex">
+    <input
+      type="text"
+      name="q"
+      value="{{ query }}"
+      placeholder="🔍 Search conversations, facts, todos…"
+      class="flex-grow p-2 border border-gray-300 rounded-l-lg focus:outline-none"
+    >
+    <button
+      type="submit"
+      class="bg-beeYellowDark hover:bg-beeYellow text-white font-semibold px-4 rounded-r-lg"
+    >Search</button>
+  </form>
+
+  <!-- Modal -->
+  <div
+    id="search-modal"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+      <button
+        id="modal-close"
+        class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-2xl leading-none"
+      >&times;</button>
+
+      <h2 class="text-xl font-semibold mb-4">Results for “{{ query }}”</h2>
+      <div class="space-y-3 max-h-[60vh] overflow-y-auto">
+        {% for r in results %}
+          <a
+            href="{{ r.url }}"
+            class="block p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+          >
+            <div class="flex justify-between items-center">
+              <span class="uppercase text-xs font-bold text-gray-500">{{ r.type }}</span>
+              <span class="text-sm text-gray-600">
+                Relevance: {{ (r.score * 100)|round(1) }}%
+              </span>
+            </div>
+            <p class="mt-2 text-gray-800">{{ r.text }}</p>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Content -->
   <div class="mb-6 p-4 bg-beeYellowDark text-white rounded-xl shadow-md animate-fade-in">
     Welcome to your Bee Dashboard! Select a tool to get started.
   </div>
 
+  <!-- Tool Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     <a href="{{ url_for('conversations') }}"
        class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center hover:shadow-xl hover:-translate-y-1 transition-transform duration-200">
@@ -33,11 +81,26 @@
       <p class="text-gray-500 text-sm">Track your places</p>
     </a>
   </div>
-
   <div class="mt-8 text-center">
     <a href="{{ url_for('index') }}"
        class="inline-block bg-beeYellow hover:bg-beeYellowDark text-white font-semibold py-2 px-5 rounded-lg shadow hover:shadow-md transition">
       Change API Key
     </a>
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  {% if results %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const modal  = document.getElementById('search-modal');
+        const closer = document.getElementById('modal-close');
+        modal.classList.remove('hidden');
+        closer.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', e => {
+          if (e.target === modal) modal.classList.add('hidden');
+        });
+      });
+    </script>
+  {% endif %}
 {% endblock %}

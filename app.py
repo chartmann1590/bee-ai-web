@@ -12,12 +12,21 @@ from beeai import Bee
 from dotenv import load_dotenv
 import pdfkit
 import markdown as md
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 # Load .env (FLASK_SECRET_KEY)
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret')
+
+# initialize local embedder
+embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+embed_dim   = embed_model.get_sentence_embedding_dimension()
+vector_index = None
+vector_meta  = []
 
 # Inject current year into all templates
 @app.context_processor
@@ -38,6 +47,75 @@ def get_bee():
     api_key = session.get('api_key')
     return Bee(api_key) if api_key else None
 
+def build_local_index():
+    global vector_index, vector_meta
+    bee   = get_bee()
+    items = []
+
+    # — conversations —
+    page = 1
+    while True:
+        payload = asyncio.run(bee.get_conversations('me', page=page, limit=100))
+        convos  = payload.get('conversations', [])
+        if not convos:
+            break
+        for c in convos:
+            text = ' '.join(m.get('text','') for m in c.get('messages', []))[:1000]
+            items.append({
+                'type': 'conversation',
+                'id': c['id'],
+                'text': text,
+                'url': url_for('conversation_detail', conversation_id=c['id'])
+            })
+        page += 1
+
+    # — facts —
+    page = 1
+    while True:
+        payload = asyncio.run(bee.get_facts('me', page=page, limit=1000))
+        facts = payload.get('facts', [])
+        if not facts:
+            break
+        for f in facts:
+            text = f.get('text','')[:1000]
+            items.append({
+                'type': 'fact',
+                'id': f['id'],
+                'text': text,
+                'url': url_for('edit_fact', fact_id=f['id'])
+            })
+        page += 1
+
+    # — todos —
+    page = 1
+    while True:
+        payload = asyncio.run(bee.get_todos('me', page=page, limit=1000))
+        todos = payload.get('todos', [])
+        if not todos:
+            break
+        for t in todos:
+            text = t.get('text','')[:1000]
+            items.append({
+                'type': 'todo',
+                'id': t['id'],
+                'text': text,
+                'url': url_for('edit_todo', todo_id=t['id'])
+            })
+        page += 1
+
+    # embed all texts
+    texts      = [it['text'] for it in items]
+    embeddings = embed_model.encode(texts, convert_to_numpy=True)
+
+    # normalize for cosine
+    norms      = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    embeddings = embeddings / norms
+
+    # build FAISS inner‑product index
+    vector_index = faiss.IndexFlatIP(embed_dim)
+    vector_index.add(embeddings)
+    vector_meta  = items
+
 # ——————————————————————————————————————————————————————————————
 #  Auth / Dashboard routes
 # ——————————————————————————————————————————————————————————————
@@ -47,15 +125,47 @@ def index():
     """Login page: POST your Bee API key here."""
     if request.method == 'POST':
         session['api_key'] = request.form['api_key'].strip()
-        return redirect(url_for('dashboard'))
-    return render_template('index.html')
+        bee = get_bee()
+
+        try:
+            payload = asyncio.run(bee.get_conversations('me', page=1, limit=1))
+            if 'conversations' in payload:
+                return redirect(url_for('dashboard'))
+        except Exception:
+            pass  # fall through to show modal on failure
+
+        session.pop('api_key', None)  # remove invalid key
+        return render_template('index.html', invalid_key=True)
+
+    return render_template('index.html', invalid_key=False)
 
 @app.route('/dashboard')
 def dashboard():
-    """Simple dashboard landing—require login first."""
     if not session.get('api_key'):
         return redirect(url_for('index'))
-    return render_template('dashboard.html')
+
+    query   = request.args.get('q', '').strip()
+    results = []
+
+    if query:
+        if vector_index is None:
+            build_local_index()
+
+        # embed + normalize query
+        q_emb = embed_model.encode([query], convert_to_numpy=True)
+        q_emb = q_emb / np.linalg.norm(q_emb, axis=1, keepdims=True)
+
+        sims, idxs = vector_index.search(q_emb, k=10)
+        for sim, idx in zip(sims[0], idxs[0]):
+            entry = vector_meta[idx].copy()
+            entry['score'] = float(sim)
+            results.append(entry)
+
+    return render_template(
+        'dashboard.html',
+        query=query,
+        results=results
+    )
 
 # ——————————————————————————————————————————————————————————————
 #  Conversations
@@ -354,9 +464,6 @@ def locations():
     )
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
 
 # ——————————————————————————————————————————————————————————————
-
-if __name__ == '__main__':
-    app.run(debug=True)
