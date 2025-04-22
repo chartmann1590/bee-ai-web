@@ -5,8 +5,8 @@ import asyncio
 from datetime import datetime
 from flask import (
     Flask, render_template, request,
-    redirect, url_for, session, flash, 
-    make_response
+    redirect, url_for, session, flash,
+    make_response, jsonify
 )
 from beeai import Bee
 from dotenv import load_dotenv
@@ -15,6 +15,7 @@ import markdown as md
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import json
 
 # Load .env (FLASK_SECRET_KEY)
 load_dotenv()
@@ -27,6 +28,9 @@ embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 embed_dim   = embed_model.get_sentence_embedding_dimension()
 vector_index = None
 vector_meta  = []
+
+# default threshold if none provided (50% relevance)
+DEFAULT_THRESHOLD = 0.5
 
 # Inject current year into all templates
 @app.context_processor
@@ -48,70 +52,77 @@ def get_bee():
     return Bee(api_key) if api_key else None
 
 def build_local_index():
+    """(Re)builds a FAISS index over every conversation, fact, and todo."""
     global vector_index, vector_meta
-    bee   = get_bee()
-    items = []
 
-    # — conversations —
-    page = 1
+    bee       = get_bee()
+    items     = []
+    convo_ids = []
+    page      = 1
+    api_limit = 100
+
+    # 1) Gather all conversation IDs
     while True:
-        payload = asyncio.run(bee.get_conversations('me', page=page, limit=100))
+        payload = asyncio.run(bee.get_conversations('me', page=page, limit=api_limit))
         convos  = payload.get('conversations', [])
         if not convos:
             break
-        for c in convos:
-            text = ' '.join(m.get('text','') for m in c.get('messages', []))[:1000]
-            items.append({
-                'type': 'conversation',
-                'id': c['id'],
-                'text': text,
-                'url': url_for('conversation_detail', conversation_id=c['id'])
-            })
+        convo_ids.extend(c['id'] for c in convos)
         page += 1
 
-    # — facts —
+    # 2) Index each conversation's full text as one item
+    for cid in convo_ids:
+        full = asyncio.run(bee.get_conversation('me', cid))
+        msgs = full.get('messages', [])
+        if not msgs:
+            continue
+        text = ' '.join(m.get('text', '') for m in msgs)
+        items.append({
+            'type': 'conversation',
+            'id':   cid,
+            'text': text,
+            'url':  url_for('conversation_detail', conversation_id=cid)
+        })
+
+    # 3) Index all facts
     page = 1
     while True:
         payload = asyncio.run(bee.get_facts('me', page=page, limit=1000))
-        facts = payload.get('facts', [])
+        facts   = payload.get('facts', [])
         if not facts:
             break
         for f in facts:
-            text = f.get('text','')[:1000]
             items.append({
                 'type': 'fact',
-                'id': f['id'],
-                'text': text,
-                'url': url_for('edit_fact', fact_id=f['id'])
+                'id':   f['id'],
+                'text': f.get('text',''),
+                'url':  url_for('edit_fact', fact_id=f['id'])
             })
         page += 1
 
-    # — todos —
+    # 4) Index all todos
     page = 1
     while True:
         payload = asyncio.run(bee.get_todos('me', page=page, limit=1000))
-        todos = payload.get('todos', [])
+        todos   = payload.get('todos', [])
         if not todos:
             break
         for t in todos:
-            text = t.get('text','')[:1000]
             items.append({
                 'type': 'todo',
-                'id': t['id'],
-                'text': text,
-                'url': url_for('edit_todo', todo_id=t['id'])
+                'id':   t['id'],
+                'text': t.get('text',''),
+                'url':  url_for('edit_todo', todo_id=t['id'])
             })
         page += 1
 
-    # embed all texts
+    # 5) Embed & normalize
     texts      = [it['text'] for it in items]
     embeddings = embed_model.encode(texts, convert_to_numpy=True)
-
-    # normalize for cosine
     norms      = np.linalg.norm(embeddings, axis=1, keepdims=True)
     embeddings = embeddings / norms
 
-    # build FAISS inner‑product index
+    # 6) Build FAISS index
     vector_index = faiss.IndexFlatIP(embed_dim)
     vector_index.add(embeddings)
     vector_meta  = items
@@ -122,50 +133,25 @@ def build_local_index():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    """Login page: POST your Bee API key here."""
     if request.method == 'POST':
         session['api_key'] = request.form['api_key'].strip()
         bee = get_bee()
-
         try:
             payload = asyncio.run(bee.get_conversations('me', page=1, limit=1))
             if 'conversations' in payload:
                 return redirect(url_for('dashboard'))
         except Exception:
-            pass  # fall through to show modal on failure
-
-        session.pop('api_key', None)  # remove invalid key
+            pass
+        session.pop('api_key', None)
         return render_template('index.html', invalid_key=True)
-
     return render_template('index.html', invalid_key=False)
 
 @app.route('/dashboard')
 def dashboard():
     if not session.get('api_key'):
         return redirect(url_for('index'))
+    return render_template('dashboard.html')
 
-    query   = request.args.get('q', '').strip()
-    results = []
-
-    if query:
-        if vector_index is None:
-            build_local_index()
-
-        # embed + normalize query
-        q_emb = embed_model.encode([query], convert_to_numpy=True)
-        q_emb = q_emb / np.linalg.norm(q_emb, axis=1, keepdims=True)
-
-        sims, idxs = vector_index.search(q_emb, k=10)
-        for sim, idx in zip(sims[0], idxs[0]):
-            entry = vector_meta[idx].copy()
-            entry['score'] = float(sim)
-            results.append(entry)
-
-    return render_template(
-        'dashboard.html',
-        query=query,
-        results=results
-    )
 
 # ——————————————————————————————————————————————————————————————
 #  Conversations
@@ -462,6 +448,71 @@ def locations():
         page        = ui_page,
         total_pages = total_pages
     )
+
+@app.route('/api/search')
+def api_search():
+    if not session.get('api_key'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    query = request.args.get('q', '').strip()
+    try:
+        cutoff = float(request.args.get('t', 50)) / 100.0
+    except ValueError:
+        cutoff = DEFAULT_THRESHOLD
+
+    results = []
+    if query:
+        # Rebuild your FAISS index (convos, facts, todos)
+        build_local_index()
+
+        # 1) Vector search (skip sims < cutoff)
+        q_emb = embed_model.encode([query], convert_to_numpy=True)
+        q_emb = q_emb / np.linalg.norm(q_emb, axis=1, keepdims=True)
+        sims, idxs = vector_index.search(q_emb, vector_index.ntotal)
+        for sim, idx in zip(sims[0], idxs[0]):
+            if sim < cutoff:
+                continue
+            entry = vector_meta[idx].copy()
+            entry['score'] = float(sim)
+            results.append(entry)
+
+        # 2) Substring fallback across everything already in the index
+        for item in vector_meta:
+            if query.lower() in item['text'].lower() \
+               and not any(r['url'] == item['url'] for r in results):
+                hit = item.copy()
+                hit['score'] = 1.0
+                results.append(hit)
+
+        # 3) SUMMARY‑LEVEL fallback: scan each conversation's summary text
+        api_page = 1
+        api_limit = 100
+        while True:
+            payload = asyncio.run(
+                get_bee().get_conversations('me', page=api_page, limit=api_limit)
+            )
+            convos = payload.get('conversations', [])
+            if not convos:
+                break
+
+            for c in convos:
+                summary = c.get('summary', '') or ''
+                if query.lower() in summary.lower():
+                    url = url_for('conversation_detail', conversation_id=c['id'])
+                    if not any(r['url'] == url for r in results):
+                        # take first line / 200 chars of the summary
+                        snippet = summary.strip().replace('\n', ' ')
+                        snippet = (snippet[:200] + '…') if len(snippet) > 200 else snippet
+                        results.append({
+                            'type':  'conversation',
+                            'id':     c['id'],
+                            'text':   snippet,
+                            'url':    url,
+                            'score':  1.0
+                        })
+            api_page += 1
+
+    return jsonify(results)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
