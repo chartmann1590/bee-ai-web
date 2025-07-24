@@ -1,7 +1,6 @@
 Flask
 beeai
 python-dotenv
-WeasyPrint
 pdfkit
 markdown
 faiss-cpu

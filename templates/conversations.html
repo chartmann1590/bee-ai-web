@@ -2,7 +2,43 @@
 {% extends 'base.html' %}
 {% block title %}Conversations{% endblock %}
 {% block content %}
-  <h2 class="text-2xl font-semibold mb-6">Conversations</h2>
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-semibold">Conversations</h2>
+    <button id="bulk-export-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+      </svg>
+      Export All Conversations
+    </button>
+  </div>
+
+  <!-- Progress Modal -->
+  <div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full">
+      <h3 class="text-xl font-semibold mb-4">Exporting Conversations</h3>
+      
+      <div class="mb-4">
+        <div class="flex justify-between text-sm text-gray-600 mb-1">
+          <span id="export-status">Preparing export...</span>
+          <span id="export-count">0 / 0</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div id="export-progress-bar" class="bg-green-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+      
+      <p id="export-message" class="text-sm text-gray-600 mb-4">Starting export process...</p>
+      
+      <div class="flex justify-end gap-2">
+        <button id="cancel-export" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition hidden">
+          Close
+        </button>
+        <button id="download-export" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition hidden">
+          Download ZIP
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
     {% for c in conversations %}
@@ -64,4 +100,127 @@
   <div class="mt-6 text-center">
     <a href="{{ url_for('dashboard') }}" class="bg-gray-200 text-gray-800 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition">Back</a>
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const exportBtn = document.getElementById('bulk-export-btn');
+    const exportModal = document.getElementById('export-modal');
+    const exportStatus = document.getElementById('export-status');
+    const exportCount = document.getElementById('export-count');
+    const exportMessage = document.getElementById('export-message');
+    const progressBar = document.getElementById('export-progress-bar');
+    const cancelBtn = document.getElementById('cancel-export');
+    const downloadBtn = document.getElementById('download-export');
+    
+    let exportId = null;
+    let progressInterval = null;
+    
+    exportBtn.addEventListener('click', startBulkExport);
+    cancelBtn.addEventListener('click', closeModal);
+    downloadBtn.addEventListener('click', downloadExport);
+    
+    function startBulkExport() {
+        // Show modal
+        exportModal.classList.remove('hidden');
+        exportStatus.textContent = 'Preparing export...';
+        exportCount.textContent = '0 / 0';
+        exportMessage.textContent = 'Starting export process...';
+        progressBar.style.width = '0%';
+        downloadBtn.classList.add('hidden');
+        cancelBtn.classList.add('hidden');
+        
+        // Start export
+        fetch('/conversations/bulk-export/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.export_id) {
+                exportId = data.export_id;
+                // Start polling for progress
+                progressInterval = setInterval(checkProgress, 500);
+            } else {
+                throw new Error('Failed to start export');
+            }
+        })
+        .catch(error => {
+            exportStatus.textContent = 'Export failed';
+            exportMessage.textContent = error.message;
+            cancelBtn.classList.remove('hidden');
+        });
+    }
+    
+    function checkProgress() {
+        if (!exportId) return;
+        
+        fetch(`/conversations/bulk-export/progress/${exportId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'fetching') {
+                exportStatus.textContent = 'Fetching conversations...';
+                exportMessage.textContent = data.message;
+            } else if (data.status === 'processing') {
+                exportStatus.textContent = 'Processing conversations...';
+                exportCount.textContent = `${data.current} / ${data.total}`;
+                exportMessage.textContent = data.message;
+                const percentage = (data.current / data.total) * 100;
+                progressBar.style.width = percentage + '%';
+            } else if (data.status === 'complete') {
+                clearInterval(progressInterval);
+                exportStatus.textContent = 'Export complete!';
+                exportMessage.textContent = 'Your export is ready for download.';
+                progressBar.style.width = '100%';
+                downloadBtn.classList.remove('hidden');
+                cancelBtn.classList.remove('hidden');
+            } else if (data.status === 'error') {
+                clearInterval(progressInterval);
+                exportStatus.textContent = 'Export failed';
+                exportMessage.textContent = data.message;
+                cancelBtn.classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            exportStatus.textContent = 'Error checking progress';
+            exportMessage.textContent = error.message;
+            cancelBtn.classList.remove('hidden');
+        });
+    }
+    
+    function downloadExport() {
+        if (!exportId) return;
+        
+        // Create a temporary link and click it to download
+        const link = document.createElement('a');
+        link.href = `/conversations/bulk-export/download/${exportId}`;
+        link.download = `bee_conversations_export_${exportId}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Close modal after download starts
+        setTimeout(closeModal, 1000);
+    }
+    
+    function closeModal() {
+        exportModal.classList.add('hidden');
+        if (progressInterval) {
+            clearInterval(progressInterval);
+        }
+        exportId = null;
+    }
+    
+    // Close modal when clicking outside
+    exportModal.addEventListener('click', function(e) {
+        if (e.target === exportModal && (downloadBtn.classList.contains('hidden') === false || cancelBtn.classList.contains('hidden') === false)) {
+            closeModal();
+        }
+    });
+});
+</script>
 {% endblock %}

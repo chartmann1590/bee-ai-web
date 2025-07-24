@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import (
     Flask, render_template, request,
     redirect, url_for, session, flash,
-    make_response, jsonify
+    make_response, jsonify, Response, stream_with_context
 )
 from beeai import Bee
 from dotenv import load_dotenv
@@ -16,6 +16,11 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import json
+import zipfile
+import io
+import time
+from queue import Queue
+import threading
 
 # Load .env (FLASK_SECRET_KEY)
 load_dotenv()
@@ -31,6 +36,9 @@ vector_meta  = []
 
 # default threshold if none provided (50% relevance)
 DEFAULT_THRESHOLD = 0.5
+
+# Global progress tracking for bulk export
+export_progress = {}
 
 # Inject current year into all templates
 @app.context_processor
@@ -253,6 +261,127 @@ def conversation_pdf(conversation_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = \
         f'attachment; filename=conversation_{conversation_id}.pdf'
+    return response
+
+# ——————————————————————————————————————————————————————————————
+#  Bulk Export Feature
+# ——————————————————————————————————————————————————————————————
+
+def generate_conversation_pdf(bee, conversation_id):
+    """Generate PDF for a single conversation."""
+    convo = asyncio.run(bee.get_conversation('me', conversation_id))
+    html = render_template('conversation_pdf.html', convo=convo)
+    pdf = pdfkit.from_string(html, False, options={'enable-local-file-access': None})
+    return pdf, convo
+
+@app.route('/conversations/bulk-export/start', methods=['POST'])
+def start_bulk_export():
+    """Start the bulk export process."""
+    bee = get_bee()
+    if not bee:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    export_id = str(int(time.time()))
+    export_progress[export_id] = {
+        'status': 'fetching',
+        'current': 0,
+        'total': 0,
+        'message': 'Fetching conversations...'
+    }
+    
+    # Start the export in a background thread
+    thread = threading.Thread(target=process_bulk_export, args=(bee, export_id))
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({'export_id': export_id})
+
+def process_bulk_export(bee, export_id):
+    """Process the bulk export in a background thread."""
+    try:
+        # Fetch all conversations
+        all_convos = []
+        api_page = 1
+        api_limit = 100
+        
+        while True:
+            payload = asyncio.run(bee.get_conversations('me', page=api_page, limit=api_limit))
+            batch = payload.get('conversations', [])
+            if not batch:
+                break
+            all_convos.extend(batch)
+            api_page += 1
+        
+        total = len(all_convos)
+        export_progress[export_id]['total'] = total
+        export_progress[export_id]['status'] = 'processing'
+        
+        # Create in-memory zip file
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i, conv in enumerate(all_convos):
+                try:
+                    export_progress[export_id]['current'] = i + 1
+                    export_progress[export_id]['message'] = f'Processing conversation {i + 1} of {total}'
+                    
+                    # Generate PDF for this conversation
+                    pdf_data, convo_detail = generate_conversation_pdf(bee, conv['id'])
+                    
+                    # Create a safe filename
+                    title = convo_detail['conversation'].get('short_summary', f'Conversation {conv["id"]}')
+                    # Clean the title for use as filename
+                    safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).rstrip()[:50]
+                    filename = f'conversation_{conv["id"]}_{safe_title}.pdf'
+                    
+                    # Add PDF to zip
+                    zip_file.writestr(filename, pdf_data)
+                    
+                except Exception as e:
+                    print(f"Error processing conversation {conv['id']}: {str(e)}")
+                    # Continue with other conversations even if one fails
+        
+        # Store the zip buffer for download
+        export_progress[export_id]['status'] = 'complete'
+        export_progress[export_id]['message'] = 'Export complete!'
+        export_progress[export_id]['data'] = zip_buffer.getvalue()
+        
+    except Exception as e:
+        export_progress[export_id]['status'] = 'error'
+        export_progress[export_id]['message'] = f'Export failed: {str(e)}'
+
+@app.route('/conversations/bulk-export/progress/<export_id>')
+def bulk_export_progress(export_id):
+    """Get the progress of a bulk export."""
+    if export_id not in export_progress:
+        return jsonify({'error': 'Export not found'}), 404
+    
+    progress = export_progress[export_id]
+    return jsonify({
+        'status': progress['status'],
+        'current': progress['current'],
+        'total': progress['total'],
+        'message': progress['message']
+    })
+
+@app.route('/conversations/bulk-export/download/<export_id>')
+def download_bulk_export(export_id):
+    """Download the completed bulk export."""
+    if export_id not in export_progress:
+        return jsonify({'error': 'Export not found'}), 404
+    
+    progress = export_progress[export_id]
+    if progress['status'] != 'complete':
+        return jsonify({'error': 'Export not complete'}), 400
+    
+    # Clean up the progress entry after sending
+    zip_data = progress['data']
+    del export_progress[export_id]
+    
+    # Return the zip file
+    response = make_response(zip_data)
+    response.headers['Content-Type'] = 'application/zip'
+    response.headers['Content-Disposition'] = f'attachment; filename=bee_conversations_export_{export_id}.zip'
     return response
 
 # ——————————————————————————————————————————————————————————————
@@ -516,5 +645,3 @@ def api_search():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
-
-# ——————————————————————————————————————————————————————————————
