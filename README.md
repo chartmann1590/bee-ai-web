@@ -5,6 +5,7 @@ A Flask-based web interface for [Bee AI](https://bee.computer), enabling you to:
 - Log in using your Bee API key
 - Browse, paginate, end/retry/delete conversations
 - Export conversations as PDFs
+- **[BETA]** Bulk export all conversations as a ZIP file (experimental feature - may have issues with large datasets)
 - Manage "Facts" (CRUD operations and filtering)
 - Manage "To-Dos" (CRUD operations)
 - Browse paginated "Locations"
@@ -115,7 +116,13 @@ Access the app at [http://localhost:5000](http://localhost:5000).
 3. **Conversations:**
    - Lists conversations with pagination.
    - End, retry, or delete conversations.
-   - Export conversations to PDF.
+   - Export individual conversations to PDF.
+   - **[BETA] Bulk Export:** Export all conversations as a ZIP file containing individual PDFs. 
+     - ⚠️ **Warning:** This is an experimental feature currently in testing.
+     - May experience issues with large numbers of conversations (100+)
+     - Processing time increases with the number of conversations
+     - If the export fails, try exporting smaller batches manually
+     - No resume capability - if interrupted, you'll need to start over
 4. **Facts:**
    - View, filter (by "confirmed"), and paginate facts.
    - Perform CRUD operations.
@@ -170,9 +177,17 @@ Access the app at [http://localhost:5000](http://localhost:5000).
 - PDF export functionality relies on wkhtmltopdf and pdfkit.
 - For production use, set FLASK_ENV=production and deploy with a WSGI server such as Gunicorn.
 
+### Known Issues
+
+- **Bulk Export (BETA)**: The bulk conversation export feature is experimental and may encounter:
+  - Memory issues with very large conversation histories
+  - Timeout errors on slow connections
+  - Individual conversation PDF generation failures won't stop the entire export
+  - Progress tracking may occasionally freeze or show incorrect counts
+  - Large exports (500+ conversations) are not recommended at this time
+
 ---
 
 ## License
 
 MIT © Charles Hartmann
-
