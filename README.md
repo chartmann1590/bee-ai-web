@@ -20,6 +20,7 @@ A Flask-based web interface for [Bee AI](https://bee.computer), enabling you to:
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Running the App](#running-the-app)
+- [Standalone Batch Export Tool](#standalone-batch-export-tool)
 - [Usage](#usage)
 - [Getting Your Bee API Key](#getting-your-bee-api-key)
 - [Project Structure](#project-structure)
@@ -106,13 +107,64 @@ Access the app at [http://localhost:5000](http://localhost:5000).
 
 ---
 
+## Standalone Batch Export Tool
+
+For users who only want to export their Bee AI conversations without running the full web interface, we provide a standalone batch export script.
+
+### Quick Start
+
+The `batch_export.py` script in the root directory is a completely self-contained tool that:
+- Creates its own virtual environment
+- Installs only the necessary dependencies
+- Exports all your Bee AI conversations as individual PDF files
+
+### Usage
+
+1. **Ensure you have Python 3.10+ and wkhtmltopdf installed** (see [Prerequisites](#prerequisites))
+
+2. **Run the script:**
+   ```bash
+   python3 batch_export.py
+   ```
+
+3. **Follow the prompts:**
+   - Enter your Bee API key when prompted
+   - Confirm that you want to export all conversations
+   - Wait for the export to complete
+
+4. **Find your exports:**
+   - The script creates a timestamped folder (e.g., `bee_export_20240115_143022`)
+   - Each conversation is saved as an individual PDF file
+   - Filenames include the conversation ID and title for easy identification
+
+### What the Script Does
+
+1. **Environment Setup:** Automatically creates a virtual environment (`export_venv`) if it doesn't exist
+2. **Dependency Installation:** Installs only the minimal required packages (beeai, pdfkit, markdown)
+3. **System Check:** Verifies that wkhtmltopdf is installed
+4. **Export Process:** 
+   - Fetches all conversations from your Bee AI account
+   - Converts each conversation to a formatted PDF
+   - Saves PDFs with descriptive filenames
+   - Shows progress for each conversation
+   - Reports success/error counts at the end
+
+### Advantages Over Web Interface Bulk Export
+
+- **No web server required:** Run directly from command line
+- **Minimal dependencies:** Only installs what's needed for export
+- **Self-contained:** Creates its own virtual environment
+- **Progress tracking:** Shows real-time progress for each conversation
+- **Error resilience:** Continues exporting even if individual conversations fail
+
+---
+
 ## Usage
 
 1. **Login:** Paste your Bee API key on the home page and submit.
 2. **Dashboard:** 
    - Displays an overview and quick navigation links.
-
-   - Search: Use the search box to perform a local semantic search over your conversations, facts, and to-dos. Results are ranked by relevance and presented with a snippet and  link to the source.
+   - Search: Use the search box to perform a local semantic search over your conversations, facts, and to-dos. Results are ranked by relevance and presented with a snippet and link to the source.
 3. **Conversations:**
    - Lists conversations with pagination.
    - End, retry, or delete conversations.
@@ -123,6 +175,7 @@ Access the app at [http://localhost:5000](http://localhost:5000).
      - Processing time increases with the number of conversations
      - If the export fails, try exporting smaller batches manually
      - No resume capability - if interrupted, you'll need to start over
+     - **Alternative:** Use the standalone `batch_export.py` script for more reliable bulk exports
 4. **Facts:**
    - View, filter (by "confirmed"), and paginate facts.
    - Perform CRUD operations.
@@ -148,6 +201,7 @@ Access the app at [http://localhost:5000](http://localhost:5000).
 ```
 .
 ├── app.py
+├── batch_export.py     # Standalone batch export script
 ├── requirements.txt
 ├── .env.example        # Template for your .env file
 ├── .gitignore
@@ -185,6 +239,7 @@ Access the app at [http://localhost:5000](http://localhost:5000).
   - Individual conversation PDF generation failures won't stop the entire export
   - Progress tracking may occasionally freeze or show incorrect counts
   - Large exports (500+ conversations) are not recommended at this time
+  - **Recommended Alternative:** Use the standalone `batch_export.py` script for more reliable bulk exports
 
 ---
 
