@@ -1,0 +1,4 @@
+beeai
+python-dotenv
+pdfkit
+markdown
